@@ -2,31 +2,28 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 class WeatherService
 {
-    protected $baseUrl;
-    protected $apiKey;
+    protected $client;
 
     public function __construct()
     {
-        $this->baseUrl = config('services.weather.base_url');
-        $this->apiKey = config('services.weather.api_key');
+        $this->client = new Client();
     }
 
     public function getWeather($city)
     {
-        $response = Http::get("{$this->baseUrl}/weather", [
-            'q' => $city,
-            'appid' => $this->apiKey,
-            'units' => 'metric'
+        $apiKey = config('services.weather.api_key');
+        $apiUrl = config('services.weather.base_url');
+
+        $url = "{$apiUrl}/weather?q={$city}&appid={$apiKey}&units=metric";
+
+        $response = $this->client->get($url, [
+            'verify' => false // Disable to not have problems with SSL (Test Environment)
         ]);
 
-        if ($response->successful()) {
-            return $response->json();
-        }
-
-        return null;
+        return json_decode($response->getBody(), true);
     }
 }
